@@ -7,59 +7,79 @@ using Tester.Services;
 
 namespace Tester.ViewModel
 {
-	public partial class MainViewModel : ObservableObject
-	{
+    public partial class MainViewModel : ObservableObject
+    {
+        // application freezes not sure why last thing i did was add database stuff and try catches
 
-		Database db;
+        Database db;
 
-		[ObservableProperty]
-		ObservableCollection<aTask> taskList;
+        [ObservableProperty]
+        ObservableCollection<aTask> taskList;
 
-		[ObservableProperty]
-		aTask openedTask;
+        [ObservableProperty]
+        aTask openedTask;
 
-		[ObservableProperty]
-		string taskInput;
+        [ObservableProperty]
+        string taskInput;
 
-		[ObservableProperty]
-		String title;
+        [ObservableProperty]
+        bool taskOpened;
 
-		public MainViewModel()
-		{
-			db = new Database();
+        [ObservableProperty]
+        String title;
+        [ObservableProperty]
+        String description;
 
-			TaskList = new ObservableCollection<aTask>();
-			title = "Todo List";
+        public MainViewModel()
+        {
+            TaskOpened = false;
+            db = new Database();
 
-			foreach (aTask task in db.GetTasks())
-			{
-				TaskList.Add(task);
-			}
-		}
+            TaskList = new ObservableCollection<aTask>();
+            title = "Todo List";
+            var tasks = db.getTasks();
 
-		[RelayCommand]
-		void addTask()
-		{
-			if (string.IsNullOrEmpty(TaskInput))
-			{
-				return;
-			}
-			//db.addTask(taskInput);
-			Debug.WriteLine("test");
-			//TaskInput = string.Empty;
-		}
+            if (tasks != null)
+            {
 
-		[RelayCommand]
-		void SyncDB()
-		{
-			Debug.Write("syncysinc");
-		}
+                foreach (aTask task in tasks)
+                {
+                    TaskList.Add(task);
+                }
+            }
+        }
 
-		[RelayCommand]
-		void OpenTask(aTask task)
-		{
-			Debug.Write("el teste\n");
-			Debug.Write(task.Title + " \n" + task.Description);
-		}
-	}
+        [RelayCommand]
+        void SaveTask(aTask task)
+        {
+            Debug.WriteLine(task.Description);
+            db.editTask(task.Id, task.Title, task.Description);
+            TaskOpened = false;
+        }
+
+        [RelayCommand]
+        void addTask()
+        {
+            if (string.IsNullOrEmpty(TaskInput))
+            {
+                return;
+            }
+            //db.addTask(taskInput);
+            Debug.WriteLine("test");
+            //TaskInput = string.Empty;
+        }
+
+        [RelayCommand]
+        void SyncDB()
+        {
+            Debug.Write("syncysinc");
+        }
+
+        [RelayCommand]
+        void OpenTask(aTask task)
+        {
+            OpenedTask = task;
+            TaskOpened = true;
+        }
+    }
 }

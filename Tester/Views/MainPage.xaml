@@ -5,7 +5,7 @@
 			 xmlns:model="clr-namespace:Tester.Model"
 			 xmlns:viewmodel="clr-namespace:Tester.ViewModel"
 			 x:DataType="viewmodel:MainViewModel"
-             Title="{Binding Title}">
+             Title="asdasd">
 
     <Grid RowDefinitions="Auto,Auto,*" ColumnDefinitions=".25*,.75*">
 		<Grid RowSpacing="50" RowDefinitions="auto,auto" ColumnDefinitions=".50*, .50*" Padding="10">
@@ -24,9 +24,14 @@
 			</CollectionView>
 
 		</Grid>
-		<Grid ColumnSpacing="50" RowDefinitions="*" ColumnDefinitions=".10*,.80*">
-			
-			<DataTem
+		<Grid Grid.Column="2" RowDefinitions=".2*,50,.90*" ColumnDefinitions=".100*" IsVisible="{Binding TaskOpened}">
+
+			<Editor FontSize="Large" Grid.Row="0" MaxLength="16" BindingContext="{Binding OpenedTask}" Text="{Binding Title}"></Editor>
+
+			<Button Grid.Row="1" Command="{Binding SaveTaskCommand}" Text="Save"></Button>
+
+			<Editor Grid.Row="2" BindingContext="{Binding OpenedTask}" Text="{Binding Description}"></Editor>
+
 			
 			
 		</Grid>

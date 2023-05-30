@@ -2,7 +2,9 @@
 {
     public class aTask
     {
-        private string title, description;
+        private string title;
+        private string description;
+        private int id;
         private bool isDone;
         public string Title
         {
@@ -22,6 +24,11 @@
         {
             get => isDone;
             set => isDone = value;
+        }
+        public int Id
+        {
+            get => id;
+            set => id = value;
         }
 
 
