@@ -29,6 +29,8 @@ namespace Tester.ViewModel
         String title;
         [ObservableProperty]
         String description;
+        [ObservableProperty]
+        int id;
 
         public MainViewModel()
         {
@@ -37,7 +39,15 @@ namespace Tester.ViewModel
 
             TaskList = new ObservableCollection<aTask>();
             title = "Todo List";
+            RefreshTasks();
+        }
+
+
+        void RefreshTasks()
+        {
             var tasks = db.getTasks();
+
+            TaskList.Clear();
 
             if (tasks != null)
             {
@@ -52,9 +62,13 @@ namespace Tester.ViewModel
         [RelayCommand]
         void SaveTask(aTask task)
         {
-            Debug.WriteLine(task.Description);
-            db.editTask(task.Id, task.Title, task.Description);
-            TaskOpened = false;
+            if (task != null)
+            {
+                Debug.WriteLine(task.Id);
+                db.editTask(task);
+                TaskOpened = false;
+                RefreshTasks();
+            }
         }
 
         [RelayCommand]
@@ -64,9 +78,10 @@ namespace Tester.ViewModel
             {
                 return;
             }
-            //db.addTask(taskInput);
+            db.createTask(TaskInput,"");
             Debug.WriteLine("test");
-            //TaskInput = string.Empty;
+            TaskInput = string.Empty;
+            RefreshTasks();
         }
 
         [RelayCommand]
@@ -78,8 +93,22 @@ namespace Tester.ViewModel
         [RelayCommand]
         void OpenTask(aTask task)
         {
+            Debug.WriteLine(task.Id);
             OpenedTask = task;
             TaskOpened = true;
+        }
+
+        [RelayCommand]
+        void doneCheck(aTask task)
+        {
+            if(!task.IsDone)
+            {
+                db.closeTask(task);
+            }
+            else
+            {
+                db.openTask(task);
+            }
         }
     }
 }

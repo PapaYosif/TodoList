@@ -11,26 +11,27 @@
 		<Grid RowSpacing="50" RowDefinitions="auto,auto" ColumnDefinitions=".50*, .50*" Padding="10">
 			<Entry x:Name="taskEntry" Text="{Binding TaskInput}" HorizontalOptions="Center"></Entry>
 			<Button Command="{Binding addTaskCommand}" Text="+" Grid.Row="0" WidthRequest="5" Grid.Column="2"></Button>
-			<Button Command="{Binding SyncDBCommand}" Text="+" Grid.Row="0" WidthRequest="5" Grid.Column="2"></Button>
+			<Button Command="{Binding SyncDBCommand}" Text="⟳" Grid.Row="1" WidthRequest="5" Grid.Column="2"></Button>
 			<CollectionView Grid.Row="2"  x:Name="tasks" ItemsSource="{Binding TaskList}">
 				<CollectionView.ItemTemplate>
 					<DataTemplate>
-						<Grid RowDefinitions="*" ColumnDefinitions="*">
-							<Button Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MainViewModel}},Path=OpenTaskCommand}" CommandParameter="{Binding .}" Text="{Binding Title}"></Button>
-							<CheckBox></CheckBox>
+						<Grid RowDefinitions="*" ColumnDefinitions=".90*,*">
+							<Button Command="{Binding doneCheckCommand}" Grid.Column="0" CommandParameter="{Binding .}" WidthRequest="1" Text="☑">
+							</Button>
+							<Button Grid.Column="1" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodel:MainViewModel}},Path=OpenTaskCommand}" CommandParameter="{Binding .}" Text="{Binding Title}"></Button>
 						</Grid>
 					</DataTemplate>
 				</CollectionView.ItemTemplate>
 			</CollectionView>
 
 		</Grid>
-		<Grid Grid.Column="2" RowDefinitions=".2*,50,.90*" ColumnDefinitions=".100*" IsVisible="{Binding TaskOpened}">
+		<Grid Grid.Column="2" RowSpacing="10" RowDefinitions="20*,20*,20*" ColumnDefinitions=".100*" IsVisible="{Binding TaskOpened}">
 
 			<Editor FontSize="Large" Grid.Row="0" MaxLength="16" BindingContext="{Binding OpenedTask}" Text="{Binding Title}"></Editor>
 
-			<Button Grid.Row="1" Command="{Binding SaveTaskCommand}" Text="Save"></Button>
+			<Button Grid.Row="1" Command="{Binding SaveTaskCommand}" CommandParameter="{Binding OpenedTask}" Text="Save"></Button>
 
-			<Editor Grid.Row="2" BindingContext="{Binding OpenedTask}" Text="{Binding Description}"></Editor>
+			<Editor Grid.Row="2" BindingContext="{Binding OpenedTask}" Text="{Binding Id}"></Editor>
 
 			
 			
