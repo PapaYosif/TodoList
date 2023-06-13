@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+	         xmlns:mct="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui"
+			 xmlns:viewmodel="clr-namespace:Tester.ViewModel"
+			 x:DataType="viewmodel:MainViewModel"
+             x:Class="Tester.Views.addTaskPage">
+	<VerticalStackLayout>
+		<Entry BackgroundColor="Black" Placeholder="Title" Text="{Binding TaskInput}"></Entry>
+		<Entry BackgroundColor="Black" Placeholder="Description" Text="{Binding DescriptionInput}"></Entry>
+
+		<Button Command="{Binding addTaskCommand}" Text="Add Task"></Button>
+	</VerticalStackLayout>
+</mct:Popup>

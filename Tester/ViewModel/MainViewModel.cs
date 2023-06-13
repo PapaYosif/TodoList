@@ -14,6 +14,18 @@ namespace Tester.ViewModel
         Database db;
 
         [ObservableProperty]
+        String name;
+        [ObservableProperty]
+        String serverIP;
+        [ObservableProperty]
+        String dbName;
+        [ObservableProperty]
+        String dbUser;
+        [ObservableProperty]
+        String dbPassword;
+
+
+        [ObservableProperty]
         ObservableCollection<aTask> taskList;
 
         [ObservableProperty]
@@ -21,6 +33,8 @@ namespace Tester.ViewModel
 
         [ObservableProperty]
         string taskInput;
+        [ObservableProperty]
+        string descriptionInput;
 
         [ObservableProperty]
         bool taskOpened;
@@ -29,8 +43,9 @@ namespace Tester.ViewModel
         String title;
         [ObservableProperty]
         String description;
+
         [ObservableProperty]
-        int id;
+        bool isDone;
 
         public MainViewModel()
         {
@@ -38,14 +53,13 @@ namespace Tester.ViewModel
             db = new Database();
 
             TaskList = new ObservableCollection<aTask>();
-            title = "Todo List";
             RefreshTasks();
         }
 
 
         void RefreshTasks()
         {
-            var tasks = db.getTasks();
+            var tasks = db.GetTasks();
 
             TaskList.Clear();
 
@@ -59,12 +73,27 @@ namespace Tester.ViewModel
             }
         }
 
+
+        public void secretSaveTask(aTask task)
+        {
+            if (task != null)
+            {
+                Debug.WriteLine(task.Id);
+                Debug.WriteLine(task.Title);
+                db.editTask(task);
+                TaskOpened = false;
+                RefreshTasks();
+            }
+        }
+
+
         [RelayCommand]
         void SaveTask(aTask task)
         {
             if (task != null)
             {
                 Debug.WriteLine(task.Id);
+                Debug.WriteLine(task.Title);
                 db.editTask(task);
                 TaskOpened = false;
                 RefreshTasks();
@@ -78,30 +107,42 @@ namespace Tester.ViewModel
             {
                 return;
             }
-            db.createTask(TaskInput,"");
+            db.createTask(TaskInput, DescriptionInput);
             Debug.WriteLine("test");
             TaskInput = string.Empty;
+            DescriptionInput = string.Empty;
             RefreshTasks();
         }
 
         [RelayCommand]
         void SyncDB()
         {
-            Debug.Write("syncysinc");
+            if (db.syncDB() == "ok")
+            {
+                RefreshTasks();
+            }
         }
 
         [RelayCommand]
         void OpenTask(aTask task)
         {
-            Debug.WriteLine(task.Id);
+            Debug.WriteLine(task.IsDone);
             OpenedTask = task;
             TaskOpened = true;
         }
 
         [RelayCommand]
+        void deleteDoneTasks()
+        {
+            db.deleteCompleted();
+            RefreshTasks();
+        }
+
+        [RelayCommand]
         void doneCheck(aTask task)
         {
-            if(!task.IsDone)
+            Debug.Write("CLIKKER");
+            if (!task.IsDone)
             {
                 db.closeTask(task);
             }
@@ -110,5 +151,15 @@ namespace Tester.ViewModel
                 db.openTask(task);
             }
         }
+
+
+        [RelayCommand]
+        void saveSettings()
+        {
+
+        }
+
+
+
     }
 }
