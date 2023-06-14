@@ -13,6 +13,8 @@ namespace Tester.Services
 
         private String databaseName;
 
+        private int idLength;
+
         private string name;
         private String server;
 
@@ -26,6 +28,9 @@ namespace Tester.Services
 
         public Database()
         {
+
+
+            idLength = 999999999;
             // create sqlite database for local task storage
             string mainDir = FileSystem.Current.AppDataDirectory;
 
@@ -38,7 +43,7 @@ namespace Tester.Services
                 this.isOpen = true;
                 var command = ldb.CreateCommand();
 
-                command.CommandText = @"CREATE TABLE IF NOT EXISTS tasks (Title varchar(32) NOT NULL,Description varchar(4096), isDone INTEGER NOT NULL);";
+                command.CommandText = @"CREATE TABLE IF NOT EXISTS tasks (id BIGINT NOT NULL,Title varchar(32) NOT NULL,Description varchar(4096), isDone INTEGER NOT NULL, UNIQUE(id));";
 
                 command.ExecuteNonQuery();
             }
@@ -62,6 +67,13 @@ namespace Tester.Services
                 try
                 {
                     mysqlConnection.Open();
+                    // for first time connection
+                    string sql = @$"CREATE TABLE IF NOT EXISTS `tasks_{name}` (`id` INT(14) NOT NULL , `Title` VARCHAR(32) NOT NULL , `Description` VARCHAR(4096) NOT NULL , `isDone` INT NOT NULL , PRIMARY KEY(`id`));";
+
+                    MySqlCommand cmd = new MySqlCommand(sql, mysqlConnection);
+                    cmd.ExecuteNonQuery();
+
+
                     return "ok";
                 }
                 catch (Exception ex)
@@ -98,12 +110,37 @@ namespace Tester.Services
                 {
                     Description = "";
                 }
+
+                Random rnd = new Random();
+
+                int id = rnd.Next(0, idLength);
+
                 var command = ldb.CreateCommand();
 
-                command.CommandText = @"INSERT INTO tasks (`title`,`description`,`isDone`) VALUES ($Title,$Description,0)";
+                while (true)
+                {
+                    command.CommandText = $"SELECT * FROM tasks WHERE `id`={id}";
+                    var reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        id = rnd.Next(0, idLength);
+                    }
+                    else
+                    {
+                        reader.Close();
+                        break;
+                    }
+                    reader.Close();
+                }
+
+                command.Parameters.AddWithValue("$id", id);
 
                 command.Parameters.AddWithValue("$Title", Title);
                 command.Parameters.AddWithValue("$Description", Description);
+
+
+                command.CommandText = @"INSERT INTO tasks (`id`,`title`,`description`,`isDone`) VALUES ($id,$Title,$Description,0)";
 
                 command.ExecuteNonQuery();
                 syncDB();
@@ -116,7 +153,7 @@ namespace Tester.Services
             {
                 var command = ldb.CreateCommand();
 
-                command.CommandText = @"UPDATE tasks SET `Title`=$Title, `Description`=$Description, `isDone`=$isDone WHERE `rowid`=$id;";
+                command.CommandText = @"UPDATE tasks SET `Title`=$Title, `Description`=$Description, `isDone`=$isDone WHERE `id`=$id;";
 
                 command.Parameters.AddWithValue("$id", task.Id);
                 command.Parameters.AddWithValue("$Title", task.Title);
@@ -166,7 +203,7 @@ namespace Tester.Services
             {
                 var command = ldb.CreateCommand();
 
-                command.CommandText = @"UPDATE tasks SET `isDone`=1 WHERE `rowid`=$id;";
+                command.CommandText = @"UPDATE tasks SET `isDone`=1 WHERE `id`=$id;";
 
                 command.Parameters.AddWithValue("$id", task.Id);
 
@@ -181,7 +218,7 @@ namespace Tester.Services
             {
                 var command = ldb.CreateCommand();
 
-                command.CommandText = @"UPDATE tasks SET `isDone`=0 WHERE `rowid`=$id;";
+                command.CommandText = @"UPDATE tasks SET `isDone`=0 WHERE `id`=$id;";
 
                 command.Parameters.AddWithValue("$id", task.Id);
 
@@ -214,12 +251,6 @@ namespace Tester.Services
                     return returnVal;
                 }
 
-                // for first time connection
-                string sql = @$"CREATE TABLE IF NOT EXISTS `tasks_{name}` (`id` INT NOT NULL AUTO_INCREMENT , `Title` VARCHAR(32) NOT NULL , `Description` VARCHAR(4096) NOT NULL , `isDone` INT NOT NULL , PRIMARY KEY (`id`));";
-
-                MySqlCommand cmd = new MySqlCommand(sql, mysqlConnection);
-                cmd.ExecuteNonQuery();
-
 
                 //get lists
 
@@ -231,9 +262,9 @@ namespace Tester.Services
                 List<aTask> syncedList = new List<aTask>();
 
 
-                sql = "SELECT * FROM tasks";
+                string sql = $"SELECT * FROM tasks_{name}";
 
-                cmd = new MySqlCommand(sql, mysqlConnection);
+                MySqlCommand cmd = new MySqlCommand(sql, mysqlConnection);
 
                 MySqlDataReader rdr = cmd.ExecuteReader();
 
@@ -250,77 +281,94 @@ namespace Tester.Services
                 }
                 rdr.Close();
 
-                if (localTaskList.Count >= remoteTaskList.Count)
+                foreach (aTask task in localTaskList)
                 {
-                    foreach (aTask task in localTaskList)
+                    syncedList.Add(task);
+                }
+
+                foreach (aTask task in remoteTaskList)
+                {
+
+                    if (syncedList.Count(item => item.Id == task.Id) == 0)
                     {
                         syncedList.Add(task);
                     }
+                }
 
-                    foreach (aTask task in remoteTaskList)
+
+
+
+
+
+                var command = ldb.CreateCommand();
+
+                command.CommandText = @"DELETE FROM tasks";
+
+                command.ExecuteNonQuery();
+
+
+                sql = @$"DELETE FROM tasks_{name}";
+
+                cmd = new MySqlCommand(sql, mysqlConnection);
+                cmd.ExecuteNonQuery();
+
+
+                // list containing ids that was changed in the foreach loop as changing task.Id in the foreach does not change it in the original list.
+                List<int> changedToIds = new List<int>();
+                int checkId;
+
+                foreach (aTask task in syncedList)
+                {
+                    int isdone = 0;
+                    if (task.IsDone)
                     {
-                        if (!syncedList.Contains(task))
-                        {
-                            syncedList.Add(task);
-                        }
+                        isdone = 1;
+                    }
+                    else
+                    {
+                        isdone = 0;
+                    }
+                    Random rndm = new Random();
+
+                    // id int to check if already exists in list
+                    checkId = task.Id;
+
+
+
+                    while (syncedList.Count(item => item.Id == checkId) > 1 || changedToIds.Contains(checkId))
+                    {
+                        Debug.WriteLine(syncedList.Count(item => item.Id == checkId) + "   " + task.Id);
+                        checkId = rndm.Next(0, idLength);
                     }
 
+                    task.Id = checkId;
+                    changedToIds.Add(checkId);
 
+                    sql = $"INSERT INTO tasks_{name} (`id`,`title`,`description`,`isDone`) VALUES ({task.Id},'{task.Title}','{task.Description}','{isdone}');";
 
+                    command.CommandText = $"INSERT INTO tasks (`id`,`title`,`description`,`isDone`) VALUES ({task.Id},'{task.Title}','{task.Description}','{isdone}')";
 
-
-
-                    var command = ldb.CreateCommand();
-
-                    command.CommandText = @"DELETE FROM tasks";
 
                     command.ExecuteNonQuery();
-
-
-                    sql = @$"DELETE FROM tasks_{name}";
 
                     cmd = new MySqlCommand(sql, mysqlConnection);
                     cmd.ExecuteNonQuery();
 
 
-                    foreach (aTask task in syncedList)
-                    {
-                        int isdone = 0;
-                        if (task.IsDone)
-                        {
-                            isdone = 1;
-                        }
-                        else
-                        {
-                            isdone = 0;
-                        }
-
-                        sql = $"INSERT INTO tasks_{name} (`title`,`description`,`isDone`) VALUES ('{task.Title}','{task.Description}','{isdone}');";
-
-                        command.CommandText = $"INSERT INTO tasks (`title`,`description`,`isDone`) VALUES ('{task.Title}','{task.Description}','{isdone}')";
-
-
-                        command.ExecuteNonQuery();
-
-                        cmd = new MySqlCommand(sql, mysqlConnection);
-                        cmd.ExecuteNonQuery();
-
-
-                    }
-
-
-
-
-                    //foreach (aTask task2 in remoteTaskList)
-                    //{
-                    //if (task.Title == task2.Title)
-                    //{
-                    //syncedList.Add(task);
-                    //break;
-                    //}
-
                 }
                 return "ok";
+
+
+
+
+                //foreach (aTask task2 in remoteTaskList)
+                //{
+                //if (task.Title == task2.Title)
+                //{
+                //syncedList.Add(task);
+                //break;
+                //}
+
             }
             else
             {
@@ -338,7 +386,7 @@ namespace Tester.Services
                 List<aTask> taskList = new List<aTask>();
                 var command = ldb.CreateCommand();
 
-                command.CommandText = @"SELECT rowid,* FROM tasks ORDER BY isDone ASC";
+                command.CommandText = @"SELECT * FROM tasks ORDER BY isDone ASC";
                 try
                 {
                     var reader = command.ExecuteReader();
