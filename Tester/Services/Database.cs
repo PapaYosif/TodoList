@@ -29,8 +29,6 @@ namespace Tester.Services
             // create sqlite database for local task storage
             string mainDir = FileSystem.Current.AppDataDirectory;
 
-            Debug.Write(mainDir + " asdasdasdgjdfghbjdfhjgjhbdfhjghjdfjhghdfjhgjfhjdfhjhdfjghbdfg");
-
             ldb = new SqliteConnection("data Source=" + mainDir + "\\taskList.db");
             Debug.Write(Directory.GetCurrentDirectory());
             try
@@ -50,6 +48,48 @@ namespace Tester.Services
             }
         }
 
+
+
+
+        public string connectRemote()
+        {
+            if (!string.IsNullOrEmpty(this.name) || !string.IsNullOrEmpty(this.server) || !string.IsNullOrEmpty(this.user) || !string.IsNullOrEmpty(this.password) || !string.IsNullOrEmpty(this.databaseName))
+            {
+
+
+                mysqlConnection = new MySqlConnection($"database={databaseName};server={server};uid={user};password={password};");
+
+                try
+                {
+                    mysqlConnection.Open();
+                    return "ok";
+                }
+                catch (Exception ex)
+                {
+                    return "Doet nie" + ex;
+
+
+                }
+
+            }
+            return "no settings";
+        }
+
+
+
+
+        public void setSettings(List<string> settings)
+        {
+            if (settings != null && settings.Count > 0)
+            {
+                this.name = settings[0];
+                this.server = settings[1];
+                this.databaseName = settings[2];
+                this.user = settings[3];
+                this.password = settings[4];
+            }
+        }
+
         public void createTask(string Title, string Description)
         {
             if (this.isOpen)
@@ -66,6 +106,7 @@ namespace Tester.Services
                 command.Parameters.AddWithValue("$Description", Description);
 
                 command.ExecuteNonQuery();
+                syncDB();
             }
         }
 
@@ -74,8 +115,6 @@ namespace Tester.Services
             if (this.isOpen)
             {
                 var command = ldb.CreateCommand();
-
-                Debug.Write("Changing: ID: " + task.Id + " Title: " + task.Title);
 
                 command.CommandText = @"UPDATE tasks SET `Title`=$Title, `Description`=$Description, `isDone`=$isDone WHERE `rowid`=$id;";
 
@@ -92,6 +131,7 @@ namespace Tester.Services
                 command.Parameters.AddWithValue("$Description", task.Description);
 
                 command.ExecuteNonQuery();
+                syncDB();
             }
         }
 
@@ -105,7 +145,20 @@ namespace Tester.Services
             command.CommandText = @"DELETE FROM tasks WHERE `isDone`=1";
 
             command.ExecuteNonQuery();
+
+            if (connectRemote() == "ok")
+            {
+                string sql = $@"DELETE FROM tasks_{name} WHERE `isDone`=1";
+                MySqlCommand cmd = new MySqlCommand(sql, mysqlConnection);
+                cmd.ExecuteNonQuery();
+            }
         }
+
+
+
+
+
+
 
         public void closeTask(aTask task)
         {
@@ -118,6 +171,8 @@ namespace Tester.Services
                 command.Parameters.AddWithValue("$id", task.Id);
 
                 command.ExecuteNonQuery();
+
+                syncDB();
             }
         }
         public void openTask(aTask task)
@@ -131,6 +186,7 @@ namespace Tester.Services
                 command.Parameters.AddWithValue("$id", task.Id);
 
                 command.ExecuteNonQuery();
+                syncDB();
             }
         }
 
@@ -152,23 +208,10 @@ namespace Tester.Services
         {
             if (this.isOpen)
             {
-                name = "jordie";
-                databaseName = "tasks";
-                server = "localhost";
-                user = "root";
-                password = "";
-
-                mysqlConnection = new MySqlConnection($"database={databaseName};server={server};uid={user};password={password};");
-
-                try
+                string returnVal = connectRemote();
+                if (returnVal != "ok")
                 {
-                    mysqlConnection.Open();
-                }
-                catch (Exception ex)
-                {
-                    return "Doet nie" + ex;
-
-
+                    return returnVal;
                 }
 
                 // for first time connection

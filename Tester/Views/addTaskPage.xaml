@@ -9,6 +9,8 @@
 		<Entry BackgroundColor="Black" Placeholder="Title" Text="{Binding TaskInput}"></Entry>
 		<Entry BackgroundColor="Black" Placeholder="Description" Text="{Binding DescriptionInput}"></Entry>
 
+		<Label BackgroundColor="Red" TextColor="White" FontSize="Large" Text="{Binding Error}"></Label>
+
 		<Button Command="{Binding addTaskCommand}" Text="Add Task"></Button>
 	</VerticalStackLayout>
 </mct:Popup>

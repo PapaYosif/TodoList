@@ -11,7 +11,8 @@
 		<Entry BackgroundColor="Black" Placeholder="DB Name" Text="{Binding DbName}"></Entry>
 		<Entry BackgroundColor="Black" Placeholder="DB username" Text="{Binding DbUser}"></Entry>
 		<Entry BackgroundColor="Black" Placeholder="DB password" Text="{Binding DbPassword}"></Entry>
+		<Label BackgroundColor="Red" TextColor="White" FontSize="Large" Text="{Binding Error}"></Label>
 
-		<Button Command="{Binding saveSettingsCommand}" Text="Add Task"></Button>
+		<Button Command="{Binding saveSettingsCommand}" Text="Save Settings"></Button>
 	</VerticalStackLayout>
 </mct:Popup>

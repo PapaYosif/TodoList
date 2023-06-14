@@ -9,7 +9,7 @@
 
 	<Grid RowDefinitions="*" ColumnDefinitions=".25*,.75*">
 
-		<Grid RowSpacing="50" RowDefinitions="10*,*" ColumnDefinitions="*,0.1*" Padding="5">
+		<Grid RowSpacing="2" RowDefinitions="1*,.03*,.1*" ColumnDefinitions="*,0.1*" Padding="5">
 
 
 			<CollectionView Grid.Row="0"  x:Name="tasks" ItemsSource="{Binding TaskList}">
@@ -41,7 +41,9 @@
 				<Button VerticalOptions="Start" Command="{Binding SyncDBCommand}" Text="⟳" Grid.Row="2" WidthRequest="5" Grid.Column="2"></Button>
 			</Grid>
 
-			<Button Grid.Row="3" Grid.Column="0" Command="{Binding deleteDoneTasksCommand}" Text="Delete completed tasks"></Button>
+			<Label Grid.Row="1" Grid.Column="0"  Text="{Binding Error}"></Label>
+
+			<Button Grid.Row="2" Grid.Column="0" Command="{Binding deleteDoneTasksCommand}" Text="Delete completed tasks"></Button>
 
 		</Grid>
 		
